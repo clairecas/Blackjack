@@ -18,8 +18,11 @@ import android.view.View.OnClickListener;
 
 import java.util.Random;
 
+import com.example.blackjack.R.id;
+
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
+import android.content.SharedPreferences;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -36,10 +39,31 @@ public class MainActivity extends ActionBarActivity {
 	private ImageView imageViewP4;
 	private ImageView imageViewP5;
 	
+	//image slots for betting chips
+	private ImageView oChip1;
+	private ImageView oChip2;
+	private ImageView oChip3;
+	private ImageView oChip4;
+	private ImageView oChip5;
+	private ImageView oChip6;
+	private ImageView oChip7;
+	private ImageView oChip8;
+	private ImageView oChip9;
+	private ImageView oChip10;
+	private ImageView pChip1;
+	private ImageView pChip2;
+	private ImageView pChip3;
+	private ImageView pChip4;
+	private ImageView pChip5;
+	private ImageView pChip6;
+	private ImageView pChip7;
+	private ImageView pChip8;
+	private ImageView pChip9;
+	private ImageView pChip10;
+	
 	private TextView textViewGameOver;
-	private TextView textView3;
-	private TextView textView4;
-	private TextView textView5;
+	private TextView oMoneyView;
+	private TextView pMoneyView;
 	
 	//to randomize deck of cards
 	private final static Random random = new Random();
@@ -49,13 +73,21 @@ public class MainActivity extends ActionBarActivity {
 	int pHand = 0;
 	
 	public int cardsDealt = 0;//keeps track of how deckOfCards index
-	public final static int maxCardsDealt = 10;//each player gets dealt 5 cards - max
 	public boolean gameOver = false;
 	public boolean playersTurn = false;
-	public boolean opponentsTurn = false;
+	//public boolean opponentsTurn = false;
 	public boolean stand = false;
 	int pCards = 0; //number of cards dealt to player
 	int oCards = 0;//number of cards dealt to opponent
+	int pBet = 1000;//players initial betting amount	
+	int oBet = 1000;//opponents initial betting amount
+	int oWins = 1; //keeps track of opponents wins
+	int pWins = 1; //keeps track of players wins
+	public boolean outOfMoney = false;
+	public boolean canDoubleDown = false;//player can only double down after first two cards are dealt
+	public int playerAces = 0; 
+	public int opponentAces = 0;
+	
 	
 	//cards are ordered clubs, diamonds, hearts, spades
 	//from 2 - ace 
@@ -87,7 +119,7 @@ public class MainActivity extends ActionBarActivity {
                     .commit();
         }
         
-      //find card slots for opponent's and players hand
+        //find card slots for opponent's and players hand
         imageViewO1 = (ImageView) findViewById(R.id.imageViewO1);
         imageViewO2 = (ImageView) findViewById(R.id.imageViewO2);
         imageViewO3 = (ImageView) findViewById(R.id.imageViewO3);
@@ -99,6 +131,28 @@ public class MainActivity extends ActionBarActivity {
         imageViewP4 = (ImageView) findViewById(R.id.imageViewP4);
         imageViewP5 = (ImageView) findViewById(R.id.imageViewP5);
         
+        //find image slots for chips
+        oChip1 = (ImageView) findViewById(R.id.oChip1);
+        oChip2 = (ImageView) findViewById(R.id.oChip2);
+        oChip3 = (ImageView) findViewById(R.id.oChip3);
+        oChip4 = (ImageView) findViewById(R.id.oChip4);
+        oChip5 = (ImageView) findViewById(R.id.oChip5);
+        oChip6 = (ImageView) findViewById(R.id.oChip6);
+        oChip7 = (ImageView) findViewById(R.id.oChip7);
+        oChip8 = (ImageView) findViewById(R.id.oChip8);
+        oChip9 = (ImageView) findViewById(R.id.oChip9);
+        oChip10 = (ImageView) findViewById(R.id.oChip10);
+        pChip1 = (ImageView) findViewById(R.id.pChip1);
+        pChip2 = (ImageView) findViewById(R.id.pChip2);
+        pChip3 = (ImageView) findViewById(R.id.pChip3);
+        pChip4 = (ImageView) findViewById(R.id.pChip4);
+        pChip5 = (ImageView) findViewById(R.id.pChip5);
+        pChip6 = (ImageView) findViewById(R.id.pChip6);
+        pChip7 = (ImageView) findViewById(R.id.pChip7);
+        pChip8 = (ImageView) findViewById(R.id.pChip8);
+        pChip9 = (ImageView) findViewById(R.id.pChip9);
+        pChip10 = (ImageView) findViewById(R.id.pChip10);
+        
         //hides cards that haven't been dealt yet
         imageViewO3.setVisibility(View.INVISIBLE);
         imageViewO4.setVisibility(View.INVISIBLE);
@@ -107,21 +161,48 @@ public class MainActivity extends ActionBarActivity {
         imageViewP4.setVisibility(View.INVISIBLE);
         imageViewP5.setVisibility(View.INVISIBLE);
         
+        //hide chips that haven't been bet on yet
+        oChip2.setVisibility(View.INVISIBLE);
+        oChip3.setVisibility(View.INVISIBLE);
+        oChip4.setVisibility(View.INVISIBLE);
+        oChip5.setVisibility(View.INVISIBLE);
+        oChip6.setVisibility(View.INVISIBLE);
+        oChip7.setVisibility(View.INVISIBLE);
+        oChip8.setVisibility(View.INVISIBLE);
+        oChip9.setVisibility(View.INVISIBLE);
+        oChip10.setVisibility(View.INVISIBLE);
+        pChip2.setVisibility(View.INVISIBLE);
+        pChip3.setVisibility(View.INVISIBLE);
+        pChip4.setVisibility(View.INVISIBLE);
+        pChip5.setVisibility(View.INVISIBLE);
+        pChip6.setVisibility(View.INVISIBLE);
+        pChip7.setVisibility(View.INVISIBLE);
+        pChip8.setVisibility(View.INVISIBLE);
+        pChip9.setVisibility(View.INVISIBLE);
+        pChip10.setVisibility(View.INVISIBLE);
+        
         //buttons
         Button hitButton = (Button) findViewById(R.id.hitButton);
         Button standButton = (Button) findViewById(R.id.standButton);
         Button newGameButton = (Button) findViewById(R.id.newGameButton);
+        Button doubleDownButton = (Button) findViewById(R.id.doubleDownButton);
+        Button surrenderButton = (Button) findViewById(R.id.surrenderButton);
+        Button saveGameButton = (Button) findViewById(R.id.saveGameButton);
+        Button loadGameButton = (Button) findViewById(R.id.loadGameButton);
         
         hitButton.setOnClickListener(hitButtonListener);
         standButton.setOnClickListener(standButtonListener);
         newGameButton.setOnClickListener(newGameButtonListener);
+        doubleDownButton.setOnClickListener(doubleDownButtonListener);
+        surrenderButton.setOnClickListener(surrenderButtonListener);
+        saveGameButton.setOnClickListener(saveGameButtonListener);
+        loadGameButton.setOnClickListener(loadGameButtonListener);
         
         //textView
         textViewGameOver = (TextView) findViewById(R.id.textViewGameOver);
-        textView3 = (TextView) findViewById(R.id.textView3);
-        textView4 = (TextView) findViewById(R.id.textView4);
-        textView5 = (TextView) findViewById(R.id.textView5);
-            
+        oMoneyView = (TextView) findViewById(R.id.oMoneyView);
+        pMoneyView = (TextView) findViewById(R.id.pMoneyView);
+        
         newGame();
     }
     
@@ -139,9 +220,9 @@ public class MainActivity extends ActionBarActivity {
     	
     	//deal cards to players and display card image
     	imageViewO1.setImageResource(R.drawable.back_blue);
-    	imageViewO2.setImageResource(deckOfCards[1]);
-    	imageViewP1.setImageResource(deckOfCards[2]);
-    	imageViewP2.setImageResource(deckOfCards[3]);
+    	imageViewO2.setImageResource(deckOfCards[1]); //2nd card in deckOfCards
+    	imageViewP1.setImageResource(deckOfCards[2]); //3rd card in deckOfCards
+    	imageViewP2.setImageResource(deckOfCards[3]); //4th card in deckOfCards
     	
     	//hides cards that haven't been dealt yet
         imageViewO3.setVisibility(View.INVISIBLE);
@@ -151,21 +232,60 @@ public class MainActivity extends ActionBarActivity {
         imageViewP4.setVisibility(View.INVISIBLE);
         imageViewP5.setVisibility(View.INVISIBLE);
     	
-    	//updates cards that have been dealt
-    	cardsDealt = 4; 
-    	pCards = 2;
-    	oCards = 2;
-    	pHand = 0;
+        //holds values of players and opponents hand
     	oHand = 0;
+    	pHand = 0;
+    	
+    	cardsDealt = 4;//keeps track of how deckOfCards index
+    	gameOver = false;
+    	playersTurn = false;
+    	canDoubleDown = true;
+    	stand = false;
+    	pCards = 2; //number of cards dealt to player
+    	oCards = 2;//number of cards dealt to opponent
+    	playerAces = 0;
+    	opponentAces = 0;
+    	
+    	//clears the betting amount
+    	if (outOfMoney){
+    		pBet = 1000;
+    		oBet = 1000;
+    		outOfMoney = false;
+    		pWins = 1; //starts at 1 so that players starts with 1 chip
+    		oWins = 1; //starts at 1 so opponent starts with 1 chip
+    		
+    		//hide chips that haven't been bet on yet
+            oChip2.setVisibility(View.INVISIBLE);
+            oChip3.setVisibility(View.INVISIBLE);
+            oChip4.setVisibility(View.INVISIBLE);
+            oChip5.setVisibility(View.INVISIBLE);
+            oChip6.setVisibility(View.INVISIBLE);
+            oChip7.setVisibility(View.INVISIBLE);
+            oChip8.setVisibility(View.INVISIBLE);
+            oChip9.setVisibility(View.INVISIBLE);
+            oChip10.setVisibility(View.INVISIBLE);
+            pChip2.setVisibility(View.INVISIBLE);
+            pChip3.setVisibility(View.INVISIBLE);
+            pChip4.setVisibility(View.INVISIBLE);
+            pChip5.setVisibility(View.INVISIBLE);
+            pChip6.setVisibility(View.INVISIBLE);
+            pChip7.setVisibility(View.INVISIBLE);
+            pChip8.setVisibility(View.INVISIBLE);
+            pChip9.setVisibility(View.INVISIBLE);
+            pChip10.setVisibility(View.INVISIBLE);
+    	}
+    	
+    	textViewGameOver.setText("New Game Started");
     	
     	//calculates opponents hand
     	for (int i=0; i < 2; i++){
-    		int temp = getCardInfo(i);
+    		int temp = getCardInfo(deckOfCards[i]);
     		oHand = oHand + temp;
     	}	
     	//calculates players hand
     	for (int i=2; i < 4; i++){
-    		int temp = getCardInfo(i);
+    		playersTurn = true;
+    		int temp = getCardInfo(deckOfCards[i]);
     		pHand = pHand + temp;
     	}
     	
@@ -177,109 +297,171 @@ public class MainActivity extends ActionBarActivity {
     //gets the value of each card that has been dealt
     public int getCardInfo(int i) {
     	//deckOfCards indexes for jack, queens, and kings
-    	if (i==9 || i==10 || i==11 || i==22 || i==23 || i==24 
-    			|| i>=35 || i<=36 || i==37 || 
-    			i==48 || i==49 || i==50){
+    	if (i==R.drawable.c9 || i==R.drawable.c10 || 
+    			i==R.drawable.c11 || i==R.drawable.c22 || 
+    			i==R.drawable.c23 || i==R.drawable.c24 || 
+    			i==R.drawable.c35 || i==R.drawable.c36 || 
+    			i==R.drawable.c37 || i==R.drawable.c48 || 
+    			i==R.drawable.c49 || i==R.drawable.c50){
     		return 10;
     	}    	
-    	//deckOfCards indexes for aces
-    	else if (i==12 || i==25 || i==38 || i==51){
-    		if((pHand+11) > 21 || (oHand+11) > 21){
-    			return 1;
-    		}
-    		else
-    			return 11;
-    	} 	
-    	
     	//number cards
-    	else if(i==0 || i==13 || i==26 || i==39 ){
+    	else if(i==R.drawable.c0 || i==R.drawable.c13 || 
+    			i==R.drawable.c26 || i==R.drawable.c39 ){
     		return 2;
     	}
-    	else if(i==1 || i==14 || i==27 || i==40 ){
+    	else if(i==R.drawable.c1 || i==R.drawable.c14 || 
+    			i==R.drawable.c27 || i==R.drawable.c40 ){
     		return 3;
     	}
-    	else if(i==2 || i==15 || i==28 || i==41 ){
+    	else if(i==R.drawable.c2 || i==R.drawable.c15 || 
+    			i==R.drawable.c28 || i==R.drawable.c41 ){
     		return 4;
     	}
-    	else if(i==3 || i==16 || i==29 || i==42 ){
+    	else if(i==R.drawable.c3 || i==R.drawable.c16 || 
+    			i==R.drawable.c29 || i==R.drawable.c42 ){
     		return 5;
     	}
-    	else if(i==4 || i==17 || i==30 || i==43 ){
+    	else if(i==R.drawable.c4 || i==R.drawable.c17 || 
+    			i==R.drawable.c30 || i==R.drawable.c43 ){
     		return 6;
     	}
-    	else if(i==5 || i==18 || i==31 || i==44 ){
+    	else if(i==R.drawable.c5 || i==R.drawable.c18 || 
+    			i==R.drawable.c31 || i==R.drawable.c44 ){
     		return 7;
     	}
-    	else if(i==6 || i==19 || i==32 || i==45 ){
+    	else if(i==R.drawable.c6 || i==R.drawable.c19 || 
+    			i==R.drawable.c32 || i==R.drawable.c45 ){
     		return 8;
     	}
-    	else if(i==7 || i==20 || i==33 || i==46 ){
+    	else if(i==R.drawable.c7 || i==R.drawable.c20 || 
+    			i==R.drawable.c33 || i==R.drawable.c46 ){
     		return 9;
     	}
-    	else if(i==8 || i==21 || i==34 || i==47 ){
+    	else if(i==R.drawable.c8 || i==R.drawable.c21 || 
+    			i==R.drawable.c34 || i==R.drawable.c47 ){
     		return 10;
+    	}    	 
+    	//checks ace
+    	else if (i==R.drawable.c12 || i==R.drawable.c25 || 
+    			i==R.drawable.c38 || i==R.drawable.c51){
+    		//keeps track of how many aces each player has in hand
+    		if (playersTurn)
+    			playerAces =+ 1;
+    		else
+    			opponentAces =+ 1;
+    		
+    		//default to return 11 for aces
+    		return 11;
     	}
-    	
-    	//value for number cards
-    	/*else {
-    		int temp = deckOfCards[i];
-    		value = (temp%13) + 2;
-    	}*/
-    	return 0;
+	
+    	return 0; //invalid index
     }
     
     //display when player wins/lose
     public void gameCheck(){
+    	//change aces to 1 if the hand is over 21
+    	if (playerAces > 0 && pHand > 21)
+    		pHand = pHand - 10;
+    	else if (opponentAces > 0 && oHand > 21)
+    		oHand = oHand - 10;
+    	
     	//opponent wins
     	if (oHand == 21 || pHand > 21){
     		imageViewO1.setImageResource(deckOfCards[0]); //display opponents down-facing card
         	textViewGameOver.setText(R.string.lose);
     		gameOver = true;
+    		canDoubleDown = false;
+    		oBet = oBet + 1000;
+    		pBet = pBet - 1000;
+    		oWins++;
+    		pWins--;
     	}
     	//player wins
     	else if (pHand == 21 || oHand > 21){
     		imageViewO1.setImageResource(deckOfCards[0]); //display opponents down-facing card
     		textViewGameOver.setText(R.string.win);
     		gameOver = true;
+    		canDoubleDown = false;
+    		pBet = pBet + 1000;
+    		oBet = oBet - 1000;
+    		pWins++;
+    		oWins--;
     	}
     	//player chooses to stand
     	else if(stand){
     		//opponent continues to draw cards with a 15 point max risk
     		while (oCards <= 5 && oHand < 15){
+    			playersTurn = false;
+    			oCards++;
     			dealerLogic();
-    		} 
-    		
+    		} 		
     		imageViewO1.setImageResource(deckOfCards[0]);//display opponents down-facing card
+    		gameOver = true;
     		if (oHand > pHand){
     			textViewGameOver.setText(R.string.lose);
+    			oBet = oBet + 1000;
+    			pBet = pBet - 1000;
+    			oWins++;
+    			pWins--;
     		}
     		else if (pHand > oHand){
     			textViewGameOver.setText(R.string.win);
+    			pBet = pBet + 1000;
+    			oBet = oBet - 1000;
+    			pWins++;
+    			oWins--;
     		}
     		else
     			textViewGameOver.setText(R.string.tie);
     	}
-    	else if(opponentsTurn){ //opponents turn
-    		if (oHand < 15) //opponent risks drawing another card
+    	//opponents turn
+    	else if(!playersTurn){ 
+    		while (oHand < 15){ //opponent risks drawing another card
+    			oCards++;
     			dealerLogic();
+    		}
     	}
     	
-    	//This code is to troubleshoot values ******************************
-    	String text = String.valueOf(pHand);
-    	textView5.setText("pHand= " + text);//value of the players 1st card + 2nd card
-    	String text2 = String.valueOf(getCardInfo(2));
-    	textView3.setText("pcard 1=" + text2 + " ");//value of the players 1st card
-    	String text3 = String.valueOf(getCardInfo(3));
-    	textView4.setText("pcard 2=" + text3 + " ");//value of the players 2nd card
+    	chipDisplay(); //updates chips that are shown
     	
+    	//display bet amount
+    	String o = String.valueOf(oBet);
+    	String p = String.valueOf(pBet);
+    	oMoneyView.setText(o);
+    	pMoneyView.setText(p);
+    	
+    	//if player or opponents runs out of money
+    	if (pBet < 0){
+    		outOfMoney = true;
+    		textViewGameOver.setText("You are out of money!");
+    	}
+    	else if (oBet < 0){
+    		outOfMoney = true;
+    		textViewGameOver.setText("Opponent is out of money!");
+    	}
+    	
+    	//max number of wins
+    	if (oWins == 10 || pWins == 10){
+    		outOfMoney = true;
+    		textViewGameOver.setText("Max wins have been reached");
+    	}
+    	  	
     }
     
     public OnClickListener hitButtonListener = new OnClickListener(){
     	@Override
-    	public void onClick(View v){  	
-    		playersTurn = true;
-    		pCards++;
-    		dealerLogic();
+    	public void onClick(View v){  
+    		if (gameOver){
+    			//if the game is over this button cannot 
+    			//do anything until a new game is started
+    		}
+    		else {
+	    		playersTurn = true;
+	    		pCards++;
+	    		canDoubleDown = false;
+	    		dealerLogic();
+    		}
     	}
 
     };
@@ -287,8 +469,15 @@ public class MainActivity extends ActionBarActivity {
     public OnClickListener standButtonListener = new OnClickListener(){
     	@Override
     	public void onClick(View v){
-    		stand = true;  
-    		gameCheck();
+    		if (gameOver){
+    			//if the game is over this button cannot 
+    			//do anything until a new game is started
+    		}
+    		else {
+	    		stand = true;  
+	    		canDoubleDown = false;
+	    		gameCheck();
+    		}
     	}
 
     };
@@ -296,74 +485,443 @@ public class MainActivity extends ActionBarActivity {
     public OnClickListener newGameButtonListener = new OnClickListener(){
     	@Override
     	public void onClick(View v){
+    		gameOver = true;
     		newGame();
     	}
 
     };
     
+    public OnClickListener doubleDownButtonListener = new OnClickListener(){
+    	@Override
+    	public void onClick(View v){
+    		if (gameOver){
+    			//if the game is over this button cannot 
+    			//do anything until a new game is started
+    		}
+    		else if (canDoubleDown){
+    			//doubles bet after first 2 cards and is dealt 1 more card	
+    			
+    			//deals one more card to player
+    			int temp = 0;
+    			imageViewP3.setImageResource(deckOfCards[cardsDealt]);
+    			imageViewP3.setVisibility(View.VISIBLE);
+    			temp = getCardInfo(deckOfCards[cardsDealt]);
+    			pHand = pHand + temp;
+    			
+    			if (pHand > oHand && pHand <= 21){
+    				imageViewO1.setImageResource(deckOfCards[0]); //display opponents down-facing card
+    	    		textViewGameOver.setText(R.string.win);
+    				pWins++;
+    				oWins--;
+    				oBet = oBet - 2000;
+    				pBet = pBet + 2000;
+    			}
+    			else {
+    				imageViewO1.setImageResource(deckOfCards[0]); //display opponents down-facing card
+    	    		textViewGameOver.setText(R.string.lose);
+    				pWins--;
+    				oWins++;
+    				oBet = oBet + 2000;
+    				pBet = pBet - 2000;
+    			}
+    			chipDisplay();
+    			
+    			//display bet amount
+    	    	String o = String.valueOf(oBet);
+    	    	String p = String.valueOf(pBet);
+    	    	oMoneyView.setText(o);
+    	    	pMoneyView.setText(p);
+    			gameOver = true;
+    		}
+    		else {
+    			//the player cannot double down because 
+    			//a card has already been drawn
+    		}
+    	}
+    };
+    
+    public OnClickListener surrenderButtonListener = new OnClickListener(){
+    	@Override
+    	public void onClick(View v){
+    		if (gameOver){
+    			//if the game is over this button cannot 
+    			//do anything until a new game is started
+    		}
+    		else {
+    			//surrender and lose $500 instead of $1000
+    			pBet = pBet - 500;
+    			oBet = oBet + 500;
+    			textViewGameOver.setText("Player surrendered $500");
+    			chipDisplay();
+    			pWins--;
+    			oWins++;
+    			
+    			//display bet amount
+    	    	String o = String.valueOf(oBet);
+    	    	String p = String.valueOf(pBet);
+    	    	oMoneyView.setText(o);
+    	    	pMoneyView.setText(p);
+    		}
+    	}
+    };
+    
+    public OnClickListener saveGameButtonListener = new OnClickListener(){
+    	@Override
+    	public void onClick(View v){
+    		//save the number of opponent wins
+    		String oScore = "";
+    		SharedPreferences opponentScore = getApplicationContext().getSharedPreferences(oScore, 0);
+    		SharedPreferences.Editor oEditor = opponentScore.edit();
+    		oEditor.putInt(oScore, oWins); //push the # of oWins to be saved
+    		oEditor.apply(); //apply the save
+    		
+    		//save the number of player wins
+    		String pScore = "";
+    		SharedPreferences playerScore = getApplicationContext().getSharedPreferences(pScore, 0);
+    		SharedPreferences.Editor pEditor = playerScore.edit();
+    		pEditor.putInt(pScore, pWins);
+    		pEditor.apply();
+    	}
+
+    };
+    
+    public OnClickListener loadGameButtonListener = new OnClickListener(){
+    	@Override
+    	public void onClick(View v){
+    		//load opponent data
+    		String oScore = "";
+    		SharedPreferences opponentScore = getApplicationContext().getSharedPreferences(oScore, 0);
+    		oWins = opponentScore.getInt(oScore, 0);
+    		
+    		String o = String.valueOf(oWins);
+        	oMoneyView.setText("oWins=" + o);
+    	}
+    };
+    
     public void dealerLogic(){
     	//if the player draws a card
-    	if (playersTurn){
+    	if (playersTurn && pCards <= 5){
+    		int temp = 0;
     		if (pCards==3){ //players 3rd card
     			imageViewP3.setImageResource(deckOfCards[cardsDealt]);
     			imageViewP3.setVisibility(View.VISIBLE);
-    			getCardInfo(cardsDealt);
-    			//pCards++;
-    	    	cardsDealt++;
-    			gameCheck();
-    			playersTurn = false;
-    	    	opponentsTurn = true;
+    			temp = getCardInfo(deckOfCards[cardsDealt]);
     		}
     		else if (pCards==4){ //players 4th card
     			imageViewP4.setImageResource(deckOfCards[cardsDealt]);
     			imageViewP4.setVisibility(View.VISIBLE);
-    			getCardInfo(cardsDealt);
-    			//pCards++;
-    	    	cardsDealt++;
-    			gameCheck();
-    			playersTurn = false;
-    	    	opponentsTurn = true;
+    			temp = getCardInfo(deckOfCards[cardsDealt]);
     		}
     		else if (pCards==5){ //players 5th card
     			imageViewP5.setImageResource(deckOfCards[cardsDealt]);
     			imageViewP5.setVisibility(View.VISIBLE);
-    			getCardInfo(cardsDealt);
-    			//pCards++;
-    	    	cardsDealt++;
-    			gameCheck(); 
-    			playersTurn = false;
-    	    	opponentsTurn = true;
+    			temp = getCardInfo(deckOfCards[cardsDealt]);		
     		}
+    		pHand = pHand + temp;
+	    	cardsDealt++;
+	    	playersTurn = false;
+			gameCheck(); 
     	}
     	//opponents turn
-    	else if(opponentsTurn){
+    	else if(!playersTurn && oCards <= 5){
+    		int temp = 0;
     		if (oCards==3){ //opponents 3rd card
     			imageViewO3.setImageResource(deckOfCards[cardsDealt]);
     			imageViewO3.setVisibility(View.VISIBLE);
-    			getCardInfo(cardsDealt);
-    			cardsDealt++;
-    			oCards++;
-    			gameCheck();
+    			temp = getCardInfo(deckOfCards[cardsDealt]);
     		}
     		else if (oCards==4){ //opponents 4th card
     			imageViewO4.setImageResource(deckOfCards[cardsDealt]);
     			imageViewO4.setVisibility(View.VISIBLE);
-    			getCardInfo(cardsDealt);
-    			cardsDealt++;
-    			oCards++;
-    			gameCheck();
+    			temp = getCardInfo(deckOfCards[cardsDealt]);
     		}
     		else if (oCards==5){ //opponents 5th card
     			imageViewO5.setImageResource(deckOfCards[cardsDealt]);
     			imageViewO5.setVisibility(View.VISIBLE);
-    			getCardInfo(cardsDealt);
-    			cardsDealt++;
-    			oCards++;
-    			gameCheck();
+    			temp = getCardInfo(deckOfCards[cardsDealt]);			
     		}
+    		oHand = oHand + temp;
+			cardsDealt++;
+			playersTurn = true;
+			gameCheck();
     	}
-    	if (pCards == 5 || oCards == 5)
+    	if (pCards > 5 || oCards > 5)
+    		gameOver = true;
     		gameCheck();
+    }
+    
+    public void chipDisplay(){
+    	if (pWins == 10){
+    		pChip1.setVisibility(View.VISIBLE);
+    		pChip2.setVisibility(View.VISIBLE);
+            pChip3.setVisibility(View.VISIBLE);
+            pChip4.setVisibility(View.VISIBLE);
+            pChip5.setVisibility(View.VISIBLE);
+            pChip6.setVisibility(View.VISIBLE);
+            pChip7.setVisibility(View.VISIBLE);
+            pChip8.setVisibility(View.VISIBLE);
+            pChip9.setVisibility(View.VISIBLE);
+            pChip10.setVisibility(View.VISIBLE);
+    	}
+    	else if(pWins == 9){
+    		pChip1.setVisibility(View.VISIBLE);
+    		pChip2.setVisibility(View.VISIBLE);
+            pChip3.setVisibility(View.VISIBLE);
+            pChip4.setVisibility(View.VISIBLE);
+            pChip5.setVisibility(View.VISIBLE);
+            pChip6.setVisibility(View.VISIBLE);
+            pChip7.setVisibility(View.VISIBLE);
+            pChip8.setVisibility(View.VISIBLE);
+            pChip9.setVisibility(View.VISIBLE);
+            pChip10.setVisibility(View.INVISIBLE);
+    	}
+    	else if(pWins == 8){
+    		pChip1.setVisibility(View.VISIBLE);
+    		pChip2.setVisibility(View.VISIBLE);
+            pChip3.setVisibility(View.VISIBLE);
+            pChip4.setVisibility(View.VISIBLE);
+            pChip5.setVisibility(View.VISIBLE);
+            pChip6.setVisibility(View.VISIBLE);
+            pChip7.setVisibility(View.VISIBLE);
+            pChip8.setVisibility(View.VISIBLE);
+            pChip9.setVisibility(View.INVISIBLE);
+            pChip10.setVisibility(View.INVISIBLE);
+    	}
+    	else if(pWins == 7){
+    		pChip1.setVisibility(View.VISIBLE);
+    		pChip2.setVisibility(View.VISIBLE);
+            pChip3.setVisibility(View.VISIBLE);
+            pChip4.setVisibility(View.VISIBLE);
+            pChip5.setVisibility(View.VISIBLE);
+            pChip6.setVisibility(View.VISIBLE);
+            pChip7.setVisibility(View.VISIBLE);
+            pChip8.setVisibility(View.INVISIBLE);
+            pChip9.setVisibility(View.INVISIBLE);
+            pChip10.setVisibility(View.INVISIBLE);
+    	}
+    	else if(pWins == 6){
+    		pChip1.setVisibility(View.VISIBLE);
+    		pChip2.setVisibility(View.VISIBLE);
+            pChip3.setVisibility(View.VISIBLE);
+            pChip4.setVisibility(View.VISIBLE);
+            pChip5.setVisibility(View.VISIBLE);
+            pChip6.setVisibility(View.VISIBLE);
+            pChip7.setVisibility(View.INVISIBLE);
+            pChip8.setVisibility(View.INVISIBLE);
+            pChip9.setVisibility(View.INVISIBLE);
+            pChip10.setVisibility(View.INVISIBLE);
+    	}
+    	else if(pWins == 5){
+    		pChip1.setVisibility(View.VISIBLE);
+    		pChip2.setVisibility(View.VISIBLE);
+            pChip3.setVisibility(View.VISIBLE);
+            pChip4.setVisibility(View.VISIBLE);
+            pChip5.setVisibility(View.VISIBLE);
+            pChip6.setVisibility(View.INVISIBLE);
+            pChip7.setVisibility(View.INVISIBLE);
+            pChip8.setVisibility(View.INVISIBLE);
+            pChip9.setVisibility(View.INVISIBLE);
+            pChip10.setVisibility(View.INVISIBLE);
+    	}
+    	else if(pWins == 4){
+    		pChip1.setVisibility(View.VISIBLE);
+    		pChip2.setVisibility(View.VISIBLE);
+            pChip3.setVisibility(View.VISIBLE);
+            pChip4.setVisibility(View.VISIBLE);
+            pChip5.setVisibility(View.INVISIBLE);
+            pChip6.setVisibility(View.INVISIBLE);
+            pChip7.setVisibility(View.INVISIBLE);
+            pChip8.setVisibility(View.INVISIBLE);
+            pChip9.setVisibility(View.INVISIBLE);
+            pChip10.setVisibility(View.INVISIBLE);
+    	}
+    	else if(pWins == 3){
+    		pChip1.setVisibility(View.VISIBLE);
+    		pChip2.setVisibility(View.VISIBLE);
+            pChip3.setVisibility(View.VISIBLE);
+            pChip4.setVisibility(View.INVISIBLE);
+            pChip5.setVisibility(View.INVISIBLE);
+            pChip6.setVisibility(View.INVISIBLE);
+            pChip7.setVisibility(View.INVISIBLE);
+            pChip8.setVisibility(View.INVISIBLE);
+            pChip9.setVisibility(View.INVISIBLE);
+            pChip10.setVisibility(View.INVISIBLE);
+    	}
+    	else if(pWins == 2){
+    		pChip1.setVisibility(View.VISIBLE);
+    		pChip2.setVisibility(View.VISIBLE);
+            pChip3.setVisibility(View.INVISIBLE);
+            pChip4.setVisibility(View.INVISIBLE);
+            pChip5.setVisibility(View.INVISIBLE);
+            pChip6.setVisibility(View.INVISIBLE);
+            pChip7.setVisibility(View.INVISIBLE);
+            pChip8.setVisibility(View.INVISIBLE);
+            pChip9.setVisibility(View.INVISIBLE);
+            pChip10.setVisibility(View.INVISIBLE);
+    	}
+    	else if(pWins == 1){
+    		pChip1.setVisibility(View.VISIBLE);
+    		pChip2.setVisibility(View.INVISIBLE);
+            pChip3.setVisibility(View.INVISIBLE);
+            pChip4.setVisibility(View.INVISIBLE);
+            pChip5.setVisibility(View.INVISIBLE);
+            pChip6.setVisibility(View.INVISIBLE);
+            pChip7.setVisibility(View.INVISIBLE);
+            pChip8.setVisibility(View.INVISIBLE);
+            pChip9.setVisibility(View.INVISIBLE);
+            pChip10.setVisibility(View.INVISIBLE);
+    	}
+    	else if(pWins == 0){
+    		pChip1.setVisibility(View.INVISIBLE);
+    		pChip2.setVisibility(View.INVISIBLE);
+            pChip3.setVisibility(View.INVISIBLE);
+            pChip4.setVisibility(View.INVISIBLE);
+            pChip5.setVisibility(View.INVISIBLE);
+            pChip6.setVisibility(View.INVISIBLE);
+            pChip7.setVisibility(View.INVISIBLE);
+            pChip8.setVisibility(View.INVISIBLE);
+            pChip9.setVisibility(View.INVISIBLE);
+            pChip10.setVisibility(View.INVISIBLE);
+    	}
+    	else{
+    		//pWins error
+    	}
+    		
+    	if (oWins == 10){
+        	oChip1.setVisibility(View.VISIBLE);
+        	oChip2.setVisibility(View.VISIBLE);
+            oChip3.setVisibility(View.VISIBLE);
+            oChip4.setVisibility(View.VISIBLE);
+            oChip5.setVisibility(View.VISIBLE);
+            oChip6.setVisibility(View.VISIBLE);
+            oChip7.setVisibility(View.VISIBLE);
+            oChip8.setVisibility(View.VISIBLE);
+            oChip9.setVisibility(View.VISIBLE);
+            oChip10.setVisibility(View.VISIBLE);
+        }	
+        else if(oWins == 9){
+        	oChip1.setVisibility(View.VISIBLE);
+        	oChip2.setVisibility(View.VISIBLE);
+            oChip3.setVisibility(View.VISIBLE);
+            oChip4.setVisibility(View.VISIBLE);
+            oChip5.setVisibility(View.VISIBLE);
+            oChip6.setVisibility(View.VISIBLE);
+            oChip7.setVisibility(View.VISIBLE);
+            oChip8.setVisibility(View.VISIBLE);
+            oChip9.setVisibility(View.VISIBLE);
+            oChip10.setVisibility(View.INVISIBLE);
+        }
+        else if(oWins == 8){
+        	oChip1.setVisibility(View.VISIBLE);
+        	oChip2.setVisibility(View.VISIBLE);
+            oChip3.setVisibility(View.VISIBLE);
+            oChip4.setVisibility(View.VISIBLE);
+            oChip5.setVisibility(View.VISIBLE);
+            oChip6.setVisibility(View.VISIBLE);
+            oChip7.setVisibility(View.VISIBLE);
+            oChip8.setVisibility(View.VISIBLE);
+            oChip9.setVisibility(View.INVISIBLE);
+            oChip10.setVisibility(View.INVISIBLE);
+        }
+        else if(oWins == 7){
+        	oChip1.setVisibility(View.VISIBLE);
+        	oChip2.setVisibility(View.VISIBLE);
+            oChip3.setVisibility(View.VISIBLE);
+            oChip4.setVisibility(View.VISIBLE);
+            oChip5.setVisibility(View.VISIBLE);
+            oChip6.setVisibility(View.VISIBLE);
+            oChip7.setVisibility(View.VISIBLE);
+            oChip8.setVisibility(View.INVISIBLE);
+            oChip9.setVisibility(View.INVISIBLE);
+            oChip10.setVisibility(View.INVISIBLE);
+        }
+        else if(oWins == 6){
+        	oChip1.setVisibility(View.VISIBLE);
+        	oChip2.setVisibility(View.VISIBLE);
+            oChip3.setVisibility(View.VISIBLE);
+            oChip4.setVisibility(View.VISIBLE);
+            oChip5.setVisibility(View.VISIBLE);
+            oChip6.setVisibility(View.VISIBLE);
+            oChip7.setVisibility(View.INVISIBLE);
+            oChip8.setVisibility(View.INVISIBLE);
+            oChip9.setVisibility(View.INVISIBLE);
+            oChip10.setVisibility(View.INVISIBLE);
+        }
+        else if(oWins == 5){
+        	oChip1.setVisibility(View.VISIBLE);
+        	oChip2.setVisibility(View.VISIBLE);
+            oChip3.setVisibility(View.VISIBLE);
+            oChip4.setVisibility(View.VISIBLE);
+            oChip5.setVisibility(View.VISIBLE);
+            oChip6.setVisibility(View.INVISIBLE);
+            oChip7.setVisibility(View.INVISIBLE);
+            oChip8.setVisibility(View.INVISIBLE);
+            oChip9.setVisibility(View.INVISIBLE);
+            oChip10.setVisibility(View.INVISIBLE);
+        }
+        else if(oWins == 4){
+        	oChip1.setVisibility(View.VISIBLE);
+        	oChip2.setVisibility(View.VISIBLE);
+            oChip3.setVisibility(View.VISIBLE);
+            oChip4.setVisibility(View.VISIBLE);
+            oChip5.setVisibility(View.INVISIBLE);
+            oChip6.setVisibility(View.INVISIBLE);
+            oChip7.setVisibility(View.INVISIBLE);
+            oChip8.setVisibility(View.INVISIBLE);
+            oChip9.setVisibility(View.INVISIBLE);
+            oChip10.setVisibility(View.INVISIBLE);
+        }
+        else if(oWins == 3){
+        	oChip1.setVisibility(View.VISIBLE);
+        	oChip2.setVisibility(View.VISIBLE);
+            oChip3.setVisibility(View.VISIBLE);
+            oChip4.setVisibility(View.INVISIBLE);
+            oChip5.setVisibility(View.INVISIBLE);
+            oChip6.setVisibility(View.INVISIBLE);
+            oChip7.setVisibility(View.INVISIBLE);
+            oChip8.setVisibility(View.INVISIBLE);
+            oChip9.setVisibility(View.INVISIBLE);
+            oChip10.setVisibility(View.INVISIBLE);
+        }
+        else if(oWins == 2){
+        	oChip1.setVisibility(View.VISIBLE);
+        	oChip2.setVisibility(View.VISIBLE);
+            oChip3.setVisibility(View.INVISIBLE);
+            oChip4.setVisibility(View.INVISIBLE);
+            oChip5.setVisibility(View.INVISIBLE);
+            oChip6.setVisibility(View.INVISIBLE);
+            oChip7.setVisibility(View.INVISIBLE);
+            oChip8.setVisibility(View.INVISIBLE);
+            oChip9.setVisibility(View.INVISIBLE);
+            oChip10.setVisibility(View.INVISIBLE);
+        }
+        else if(oWins == 1){
+        	oChip1.setVisibility(View.VISIBLE);
+        	oChip2.setVisibility(View.INVISIBLE);
+            oChip3.setVisibility(View.INVISIBLE);
+            oChip4.setVisibility(View.INVISIBLE);
+            oChip5.setVisibility(View.INVISIBLE);
+            oChip6.setVisibility(View.INVISIBLE);
+            oChip7.setVisibility(View.INVISIBLE);
+            oChip8.setVisibility(View.INVISIBLE);
+            oChip9.setVisibility(View.INVISIBLE);
+            oChip10.setVisibility(View.INVISIBLE);
+        }
+        else if(oWins == 0){
+        	oChip1.setVisibility(View.INVISIBLE);
+        	oChip2.setVisibility(View.INVISIBLE);
+            oChip3.setVisibility(View.INVISIBLE);
+            oChip4.setVisibility(View.INVISIBLE);
+            oChip5.setVisibility(View.INVISIBLE);
+            oChip6.setVisibility(View.INVISIBLE);
+            oChip7.setVisibility(View.INVISIBLE);
+            oChip8.setVisibility(View.INVISIBLE);
+            oChip9.setVisibility(View.INVISIBLE);
+            oChip10.setVisibility(View.INVISIBLE);
+        }
+        else{
+        	//oWins error   		
+        }
     }
 
     @Override

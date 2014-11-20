@@ -20,5 +20,6 @@
     <string name="surrender">Surrender</string>
     <string name="saveGame">Save Game</string>
     <string name="loadGame">Load Game</string>
+    <string name="OPPONENT_PREF">OPPONENT_PREF</string>
     
 </resources>

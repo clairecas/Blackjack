@@ -81,8 +81,6 @@ public class MainActivity extends ActionBarActivity {
 	int oCards = 0;//number of cards dealt to opponent
 	int pBet = 1000;//players initial betting amount	
 	int oBet = 1000;//opponents initial betting amount
-	int oWins = 1; //keeps track of opponents wins
-	int pWins = 1; //keeps track of players wins
 	public boolean outOfMoney = false;
 	public boolean canDoubleDown = false;//player can only double down after first two cards are dealt
 	public int playerAces = 0; 
@@ -251,8 +249,6 @@ public class MainActivity extends ActionBarActivity {
     		pBet = 1000;
     		oBet = 1000;
     		outOfMoney = false;
-    		pWins = 1; //starts at 1 so that players starts with 1 chip
-    		oWins = 1; //starts at 1 so opponent starts with 1 chip
     		
     		//hide chips that haven't been bet on yet
             oChip2.setVisibility(View.INVISIBLE);
@@ -372,11 +368,10 @@ public class MainActivity extends ActionBarActivity {
         	textViewGameOver.setText(R.string.lose);
     		gameOver = true;
     		canDoubleDown = false;
-    		oBet = oBet + 1000;
     		pBet = pBet - 1000;
-    		oWins++;
-    		pWins--;
+    		oBet = oBet - 1000;
     	}
+    	
     	//player wins
     	else if (pHand == 21 || oHand > 21){
     		imageViewO1.setImageResource(deckOfCards[0]); //display opponents down-facing card
@@ -385,36 +380,8 @@ public class MainActivity extends ActionBarActivity {
     		canDoubleDown = false;
     		pBet = pBet + 1000;
     		oBet = oBet - 1000;
-    		pWins++;
-    		oWins--;
     	}
-    	//player chooses to stand
-    	else if(stand){
-    		//opponent continues to draw cards with a 15 point max risk
-    		while (oCards <= 5 && oHand < 15){
-    			playersTurn = false;
-    			oCards++;
-    			dealerLogic();
-    		} 		
-    		imageViewO1.setImageResource(deckOfCards[0]);//display opponents down-facing card
-    		gameOver = true;
-    		if (oHand > pHand){
-    			textViewGameOver.setText(R.string.lose);
-    			oBet = oBet + 1000;
-    			pBet = pBet - 1000;
-    			oWins++;
-    			pWins--;
-    		}
-    		else if (pHand > oHand){
-    			textViewGameOver.setText(R.string.win);
-    			pBet = pBet + 1000;
-    			oBet = oBet - 1000;
-    			pWins++;
-    			oWins--;
-    		}
-    		else
-    			textViewGameOver.setText(R.string.tie);
-    	}
+    	
     	//opponents turn
     	else if(!playersTurn){ 
     		while (oHand < 15){ //opponent risks drawing another card
@@ -426,10 +393,8 @@ public class MainActivity extends ActionBarActivity {
     	chipDisplay(); //updates chips that are shown
     	
     	//display bet amount
-    	String o = String.valueOf(oBet);
-    	String p = String.valueOf(pBet);
-    	oMoneyView.setText(o);
-    	pMoneyView.setText(p);
+    	oMoneyView.setText(String.valueOf(oBet));
+    	pMoneyView.setText(String.valueOf(pBet));
     	
     	//if player or opponents runs out of money
     	if (pBet < 0){
@@ -442,7 +407,7 @@ public class MainActivity extends ActionBarActivity {
     	}
     	
     	//max number of wins
-    	if (oWins == 10 || pWins == 10){
+    	if (oBet >= 10000 || pBet >= 10000){
     		outOfMoney = true;
     		textViewGameOver.setText("Max wins have been reached");
     	}
@@ -476,8 +441,32 @@ public class MainActivity extends ActionBarActivity {
     		else {
 	    		stand = true;  
 	    		canDoubleDown = false;
-	    		gameCheck();
-    		}
+	    		//gameCheck();
+	        	//opponent continues to draw cards with a 15 point max risk
+	        	while (oCards <= 5 && oHand < 15){
+	        		playersTurn = false;
+	        		oCards++;
+	        		dealerLogic();
+	        	} 		
+	        	imageViewO1.setImageResource(deckOfCards[0]);//display opponents down-facing card
+	       		gameOver = true;
+	       		if (oHand > pHand){
+	       			textViewGameOver.setText(R.string.lose);
+	       			oBet = oBet + 1000;
+	       			pBet = pBet - 1000;
+	       		}
+	       		else if (pHand > oHand){
+	       			textViewGameOver.setText(R.string.win);
+	        		pBet = pBet + 1000;
+	       			oBet = oBet - 1000;
+	       		}
+	        	else
+	       			textViewGameOver.setText(R.string.tie);
+	       		
+	       		//display bet amount
+	        	oMoneyView.setText(String.valueOf(oBet));
+	        	pMoneyView.setText(String.valueOf(pBet));
+	       	}
     	}
 
     };
@@ -511,26 +500,20 @@ public class MainActivity extends ActionBarActivity {
     			if (pHand > oHand && pHand <= 21){
     				imageViewO1.setImageResource(deckOfCards[0]); //display opponents down-facing card
     	    		textViewGameOver.setText(R.string.win);
-    				pWins++;
-    				oWins--;
     				oBet = oBet - 2000;
     				pBet = pBet + 2000;
     			}
     			else {
     				imageViewO1.setImageResource(deckOfCards[0]); //display opponents down-facing card
     	    		textViewGameOver.setText(R.string.lose);
-    				pWins--;
-    				oWins++;
     				oBet = oBet + 2000;
     				pBet = pBet - 2000;
     			}
     			chipDisplay();
     			
     			//display bet amount
-    	    	String o = String.valueOf(oBet);
-    	    	String p = String.valueOf(pBet);
-    	    	oMoneyView.setText(o);
-    	    	pMoneyView.setText(p);
+    	    	oMoneyView.setText(String.valueOf(oBet));
+    	    	pMoneyView.setText(String.valueOf(pBet));
     			gameOver = true;
     		}
     		else {
@@ -553,8 +536,6 @@ public class MainActivity extends ActionBarActivity {
     			oBet = oBet + 500;
     			textViewGameOver.setText("Player surrendered $500");
     			chipDisplay();
-    			pWins--;
-    			oWins++;
     			
     			//display bet amount
     	    	String o = String.valueOf(oBet);
@@ -568,19 +549,14 @@ public class MainActivity extends ActionBarActivity {
     public OnClickListener saveGameButtonListener = new OnClickListener(){
     	@Override
     	public void onClick(View v){
-    		//save the number of opponent wins
-    		String oScore = "";
-    		SharedPreferences opponentScore = getApplicationContext().getSharedPreferences(oScore, 0);
-    		SharedPreferences.Editor oEditor = opponentScore.edit();
-    		oEditor.putInt(oScore, oWins); //push the # of oWins to be saved
-    		oEditor.apply(); //apply the save
+    		//sharedPreference file for saving bet amounts in game
+    		SharedPreferences pref = getApplicationContext().getSharedPreferences("PREF", 0);
+    		SharedPreferences.Editor editor = pref.edit();
+    		editor.putInt("oPref", oBet); //push the bet amount of oBet to be saved
+    		editor.putInt("pPref", pBet); // push the bet amount of pBet to be saved
+    		editor.apply(); //apply the save
     		
-    		//save the number of player wins
-    		String pScore = "";
-    		SharedPreferences playerScore = getApplicationContext().getSharedPreferences(pScore, 0);
-    		SharedPreferences.Editor pEditor = playerScore.edit();
-    		pEditor.putInt(pScore, pWins);
-    		pEditor.apply();
+    		textViewGameOver.setText("Game Saved");
     	}
 
     };
@@ -588,13 +564,20 @@ public class MainActivity extends ActionBarActivity {
     public OnClickListener loadGameButtonListener = new OnClickListener(){
     	@Override
     	public void onClick(View v){
-    		//load opponent data
-    		String oScore = "";
-    		SharedPreferences opponentScore = getApplicationContext().getSharedPreferences(oScore, 0);
-    		oWins = opponentScore.getInt(oScore, 0);
+    		//sharedPreference file for saving bet amounts in game
+    		SharedPreferences pref = getApplicationContext().getSharedPreferences("PREF", 0);
+    		//load data
+    		oBet = pref.getInt("oPref", 1000); //oPref is key that holds stored value, 1000 is default if nothing is stored there
+    		pBet = pref.getInt("pPref", 1000);
+    		SharedPreferences.Editor editor = pref.edit();
+    		editor.clear(); //clear the data
+    		editor.commit();
     		
-    		String o = String.valueOf(oWins);
-        	oMoneyView.setText("oWins=" + o);
+        	oMoneyView.setText(String.valueOf(oBet));
+        	pMoneyView.setText(String.valueOf(pBet));
+        	textViewGameOver.setText("Game Loaded");
+        	
+        	chipDisplay();
     	}
     };
     
@@ -651,7 +634,7 @@ public class MainActivity extends ActionBarActivity {
     }
     
     public void chipDisplay(){
-    	if (pWins == 10){
+    	if (pBet >= 10000){
     		pChip1.setVisibility(View.VISIBLE);
     		pChip2.setVisibility(View.VISIBLE);
             pChip3.setVisibility(View.VISIBLE);
@@ -663,7 +646,7 @@ public class MainActivity extends ActionBarActivity {
             pChip9.setVisibility(View.VISIBLE);
             pChip10.setVisibility(View.VISIBLE);
     	}
-    	else if(pWins == 9){
+    	else if(pBet <= 9000 && pBet > 8000){
     		pChip1.setVisibility(View.VISIBLE);
     		pChip2.setVisibility(View.VISIBLE);
             pChip3.setVisibility(View.VISIBLE);
@@ -675,7 +658,7 @@ public class MainActivity extends ActionBarActivity {
             pChip9.setVisibility(View.VISIBLE);
             pChip10.setVisibility(View.INVISIBLE);
     	}
-    	else if(pWins == 8){
+    	else if(pBet <= 8000 && pBet > 7000){
     		pChip1.setVisibility(View.VISIBLE);
     		pChip2.setVisibility(View.VISIBLE);
             pChip3.setVisibility(View.VISIBLE);
@@ -687,7 +670,7 @@ public class MainActivity extends ActionBarActivity {
             pChip9.setVisibility(View.INVISIBLE);
             pChip10.setVisibility(View.INVISIBLE);
     	}
-    	else if(pWins == 7){
+    	else if(pBet <= 7000 && pBet > 6000){
     		pChip1.setVisibility(View.VISIBLE);
     		pChip2.setVisibility(View.VISIBLE);
             pChip3.setVisibility(View.VISIBLE);
@@ -699,7 +682,7 @@ public class MainActivity extends ActionBarActivity {
             pChip9.setVisibility(View.INVISIBLE);
             pChip10.setVisibility(View.INVISIBLE);
     	}
-    	else if(pWins == 6){
+    	else if(pBet <= 6000 && pBet > 5000){
     		pChip1.setVisibility(View.VISIBLE);
     		pChip2.setVisibility(View.VISIBLE);
             pChip3.setVisibility(View.VISIBLE);
@@ -711,7 +694,7 @@ public class MainActivity extends ActionBarActivity {
             pChip9.setVisibility(View.INVISIBLE);
             pChip10.setVisibility(View.INVISIBLE);
     	}
-    	else if(pWins == 5){
+    	else if(pBet <= 5000 && pBet > 4000){
     		pChip1.setVisibility(View.VISIBLE);
     		pChip2.setVisibility(View.VISIBLE);
             pChip3.setVisibility(View.VISIBLE);
@@ -723,7 +706,7 @@ public class MainActivity extends ActionBarActivity {
             pChip9.setVisibility(View.INVISIBLE);
             pChip10.setVisibility(View.INVISIBLE);
     	}
-    	else if(pWins == 4){
+    	else if(pBet <= 4000 && pBet > 3000){
     		pChip1.setVisibility(View.VISIBLE);
     		pChip2.setVisibility(View.VISIBLE);
             pChip3.setVisibility(View.VISIBLE);
@@ -735,7 +718,7 @@ public class MainActivity extends ActionBarActivity {
             pChip9.setVisibility(View.INVISIBLE);
             pChip10.setVisibility(View.INVISIBLE);
     	}
-    	else if(pWins == 3){
+    	else if(pBet <= 3000 && pBet > 2000){
     		pChip1.setVisibility(View.VISIBLE);
     		pChip2.setVisibility(View.VISIBLE);
             pChip3.setVisibility(View.VISIBLE);
@@ -747,7 +730,7 @@ public class MainActivity extends ActionBarActivity {
             pChip9.setVisibility(View.INVISIBLE);
             pChip10.setVisibility(View.INVISIBLE);
     	}
-    	else if(pWins == 2){
+    	else if(pBet <= 2000 && pBet > 1000){
     		pChip1.setVisibility(View.VISIBLE);
     		pChip2.setVisibility(View.VISIBLE);
             pChip3.setVisibility(View.INVISIBLE);
@@ -759,7 +742,7 @@ public class MainActivity extends ActionBarActivity {
             pChip9.setVisibility(View.INVISIBLE);
             pChip10.setVisibility(View.INVISIBLE);
     	}
-    	else if(pWins == 1){
+    	else if(pBet == 1000 && pBet > 0){
     		pChip1.setVisibility(View.VISIBLE);
     		pChip2.setVisibility(View.INVISIBLE);
             pChip3.setVisibility(View.INVISIBLE);
@@ -771,7 +754,7 @@ public class MainActivity extends ActionBarActivity {
             pChip9.setVisibility(View.INVISIBLE);
             pChip10.setVisibility(View.INVISIBLE);
     	}
-    	else if(pWins == 0){
+    	else if(pBet <= 0){
     		pChip1.setVisibility(View.INVISIBLE);
     		pChip2.setVisibility(View.INVISIBLE);
             pChip3.setVisibility(View.INVISIBLE);
@@ -784,10 +767,10 @@ public class MainActivity extends ActionBarActivity {
             pChip10.setVisibility(View.INVISIBLE);
     	}
     	else{
-    		//pWins error
+    		//pWBet error
     	}
     		
-    	if (oWins == 10){
+    	if (oBet >= 10000){
         	oChip1.setVisibility(View.VISIBLE);
         	oChip2.setVisibility(View.VISIBLE);
             oChip3.setVisibility(View.VISIBLE);
@@ -799,7 +782,7 @@ public class MainActivity extends ActionBarActivity {
             oChip9.setVisibility(View.VISIBLE);
             oChip10.setVisibility(View.VISIBLE);
         }	
-        else if(oWins == 9){
+        else if(oBet <= 9000 && oBet > 8000){
         	oChip1.setVisibility(View.VISIBLE);
         	oChip2.setVisibility(View.VISIBLE);
             oChip3.setVisibility(View.VISIBLE);
@@ -811,7 +794,7 @@ public class MainActivity extends ActionBarActivity {
             oChip9.setVisibility(View.VISIBLE);
             oChip10.setVisibility(View.INVISIBLE);
         }
-        else if(oWins == 8){
+        else if(oBet <= 8000 && oBet > 7000){
         	oChip1.setVisibility(View.VISIBLE);
         	oChip2.setVisibility(View.VISIBLE);
             oChip3.setVisibility(View.VISIBLE);
@@ -823,7 +806,7 @@ public class MainActivity extends ActionBarActivity {
             oChip9.setVisibility(View.INVISIBLE);
             oChip10.setVisibility(View.INVISIBLE);
         }
-        else if(oWins == 7){
+        else if(oBet <= 7000 && oBet > 6000){
         	oChip1.setVisibility(View.VISIBLE);
         	oChip2.setVisibility(View.VISIBLE);
             oChip3.setVisibility(View.VISIBLE);
@@ -835,7 +818,7 @@ public class MainActivity extends ActionBarActivity {
             oChip9.setVisibility(View.INVISIBLE);
             oChip10.setVisibility(View.INVISIBLE);
         }
-        else if(oWins == 6){
+        else if(oBet <= 6000 && oBet > 5000){
         	oChip1.setVisibility(View.VISIBLE);
         	oChip2.setVisibility(View.VISIBLE);
             oChip3.setVisibility(View.VISIBLE);
@@ -847,7 +830,7 @@ public class MainActivity extends ActionBarActivity {
             oChip9.setVisibility(View.INVISIBLE);
             oChip10.setVisibility(View.INVISIBLE);
         }
-        else if(oWins == 5){
+        else if(oBet <= 5000 && oBet > 4000){
         	oChip1.setVisibility(View.VISIBLE);
         	oChip2.setVisibility(View.VISIBLE);
             oChip3.setVisibility(View.VISIBLE);
@@ -859,7 +842,7 @@ public class MainActivity extends ActionBarActivity {
             oChip9.setVisibility(View.INVISIBLE);
             oChip10.setVisibility(View.INVISIBLE);
         }
-        else if(oWins == 4){
+        else if(oBet <= 4000 && oBet > 3000){
         	oChip1.setVisibility(View.VISIBLE);
         	oChip2.setVisibility(View.VISIBLE);
             oChip3.setVisibility(View.VISIBLE);
@@ -871,7 +854,7 @@ public class MainActivity extends ActionBarActivity {
             oChip9.setVisibility(View.INVISIBLE);
             oChip10.setVisibility(View.INVISIBLE);
         }
-        else if(oWins == 3){
+        else if(oBet <= 3000 && oBet > 2000){
         	oChip1.setVisibility(View.VISIBLE);
         	oChip2.setVisibility(View.VISIBLE);
             oChip3.setVisibility(View.VISIBLE);
@@ -883,7 +866,7 @@ public class MainActivity extends ActionBarActivity {
             oChip9.setVisibility(View.INVISIBLE);
             oChip10.setVisibility(View.INVISIBLE);
         }
-        else if(oWins == 2){
+        else if(oBet <= 2000 && oBet > 1000){
         	oChip1.setVisibility(View.VISIBLE);
         	oChip2.setVisibility(View.VISIBLE);
             oChip3.setVisibility(View.INVISIBLE);
@@ -895,7 +878,7 @@ public class MainActivity extends ActionBarActivity {
             oChip9.setVisibility(View.INVISIBLE);
             oChip10.setVisibility(View.INVISIBLE);
         }
-        else if(oWins == 1){
+        else if(oBet <= 1000 && oBet > 0){
         	oChip1.setVisibility(View.VISIBLE);
         	oChip2.setVisibility(View.INVISIBLE);
             oChip3.setVisibility(View.INVISIBLE);
@@ -907,7 +890,7 @@ public class MainActivity extends ActionBarActivity {
             oChip9.setVisibility(View.INVISIBLE);
             oChip10.setVisibility(View.INVISIBLE);
         }
-        else if(oWins == 0){
+        else if(oBet <= 0){
         	oChip1.setVisibility(View.INVISIBLE);
         	oChip2.setVisibility(View.INVISIBLE);
             oChip3.setVisibility(View.INVISIBLE);
@@ -920,7 +903,7 @@ public class MainActivity extends ActionBarActivity {
             oChip10.setVisibility(View.INVISIBLE);
         }
         else{
-        	//oWins error   		
+        	//oBet error   		
         }
     }
 
